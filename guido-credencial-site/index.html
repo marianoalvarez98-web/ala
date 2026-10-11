@@ -1,0 +1,582 @@
+<html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credencial Digital - Proyecto académico</title>
+  <meta name="description" content="Credencial digital de proyecto académico.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://marianoalvarez98-web.github.io/al/">
+  <meta property="og:title" content="Credencial Digital">
+  <meta property="og:description" content="Credencial digital de proyecto académico.">
+  <meta property="og:image" content="https://marianoalvarez98-web.github.io/al/preview.webp">
+  <meta property="og:image:type" content="image/webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Credencial Digital">
+  <meta name="twitter:description" content="Credencial digital de proyecto académico.">
+  <meta name="twitter:image" content="https://marianoalvarez98-web.github.io/al/preview.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul: #362ebb;
+      --gris-fondo: #f0f0f0;
+      --gris-icono: #8a8a8a;
+      --gris-texto: #6b6b6b;
+      --gris-borde: #e2e2e2;
+      --texto: #222222;
+      --blanco: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: var(--gris-fondo);
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      color: var(--texto);
+    }
+
+    /* ---------- Barra superior ---------- */
+    .header {
+      background: var(--azul);
+      color: var(--blanco);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .header h1 { font-size: 18px; font-weight: 700; flex: 1; }
+
+    .header button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      display: flex;
+      padding: 4px;
+    }
+
+    .header svg { width: 26px; height: 26px; }
+
+    /* ---------- Contenido ---------- */
+    .contenido {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Spinner de carga */
+    .cargando {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 4px solid var(--blanco);
+      border-top-color: var(--azul);
+      border-right-color: var(--azul);
+      animation: girar 0.9s linear infinite;
+    }
+
+    @keyframes girar { to { transform: rotate(360deg); } }
+
+    .oculto { display: none !important; }
+
+    /* Tarjeta principal */
+    .tarjeta {
+      background: var(--blanco);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      animation: aparecer 0.3s ease-out;
+    }
+
+    @keyframes aparecer {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .tarjeta-cuerpo { padding: 24px 28px 20px; }
+
+    .tarjeta-nombre { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+
+    /* Giro de la credencial */
+    .giro {
+      perspective: 1000px;
+      cursor: grab;
+      touch-action: pan-y;      /* deja scrollear vertical, el gesto horizontal lo maneja JS */
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .giro.arrastrando { cursor: grabbing; }
+    .giro.arrastrando .giro-interior { transition: none; }
+
+    .giro-interior {
+      display: grid;
+      transition: transform 0.7s ease;
+      transform-style: preserve-3d;
+    }
+
+    .giro.volteada .giro-interior { transform: rotateY(180deg); }
+
+    .giro .credencial {
+      grid-area: 1 / 1;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .giro .dorso { transform: rotateY(180deg); }
+
+    .dorso { display: flex; flex-direction: column; }
+
+    .dorso-datos { font-size: 9px; line-height: 1.6; margin-top: 4px; }
+    .dorso-datos b { font-size: 11px; font-weight: 400; }
+
+    .dorso-dibujo {
+      flex: 1;
+      margin-top: 8px;
+      border-top: 1px solid #c9d6ea;
+      background: repeating-linear-gradient(160deg, transparent 0 6px, rgba(138, 167, 201, 0.15) 6px 7px);
+      min-height: 60px;
+    }
+
+    .puntos {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .puntos i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #b9cbe3;
+      transition: background 0.3s;
+    }
+
+    .giro:not(.volteada) + .puntos i:first-child,
+    .giro.volteada + .puntos i:last-child { background: var(--azul); }
+
+    .ayuda-giro {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gris-texto);
+      margin-top: 6px;
+    }
+
+    /* Credencial de fantasía */
+    .credencial {
+      position: relative;
+      background: linear-gradient(135deg, #eef3fb 0%, #f7f1fa 100%);
+      border: 1px solid #d6d6e6;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .cred-encabezado {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .cred-encabezado span:last-child { color: #8aa7c9; font-size: 9px; }
+
+    .cred-medio { display: flex; gap: 10px; }
+
+    .cred-foto {
+      width: 30%;
+      aspect-ratio: 3 / 4;
+      background: #d9dde6;
+      border-radius: 3px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .cred-foto svg { width: 85%; fill: #a9b0bf; }
+
+    .cred-datos { flex: 1; font-size: 8px; line-height: 1.25; }
+
+    .cred-datos .etiqueta { color: #555; }
+    .cred-datos .valor { font-size: 11px; margin-bottom: 3px; }
+
+    .cred-fila { display: flex; gap: 14px; }
+
+    .cred-pie {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .cred-numero { width: 30%; flex-shrink: 0; }
+    .cred-numero .etiqueta { font-size: 7px; }
+    .cred-numero .valor { font-size: 15px; font-weight: 700; }
+
+    /* Código de barras decorativo (generado con JS) */
+    .barras {
+      flex: 1;
+      height: 30px;
+      display: flex;
+      align-items: stretch;
+      gap: 1px;
+    }
+
+    .barras i { background: #111; display: block; }
+
+    /* Marca de agua */
+    .marca-agua {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .marca-agua span {
+      transform: rotate(-18deg);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: rgba(220, 40, 40, 0.35);
+      border: 3px solid rgba(220, 40, 40, 0.35);
+      padding: 2px 10px;
+      text-align: center;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .marca-agua small { display: block; font-size: 11px; }
+
+    .actualizacion {
+      text-align: center;
+      color: var(--gris-texto);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 20px;
+    }
+
+    /* Acciones */
+    .acciones { display: flex; border-top: 1px solid var(--gris-borde); }
+
+    .accion {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 8px;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--texto);
+      cursor: pointer;
+    }
+
+    .accion + .accion { border-left: 1px solid var(--gris-borde); }
+
+    .accion svg { width: 22px; height: 22px; color: var(--azul); flex-shrink: 0; }
+
+    .desplegable { border-top: 1px solid var(--gris-borde); }
+
+    .desplegable .accion { justify-content: flex-start; padding: 16px 28px; width: 100%; }
+
+    .desplegable .flecha { margin-left: auto; color: var(--gris-texto); transition: transform 0.2s; }
+
+    .desplegable.abierto .flecha { transform: rotate(180deg); }
+
+    .panel-qr {
+      display: none;
+      padding: 0 28px 20px;
+      text-align: center;
+      color: var(--gris-texto);
+      font-size: 14px;
+    }
+
+    .desplegable.abierto .panel-qr { display: block; }
+
+    .qr-muestra {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 10px;
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      border: 6px solid var(--blanco);
+      outline: 1px solid var(--gris-borde);
+    }
+
+    .qr-muestra i { display: block; }
+
+    /* ---------- Barra inferior ---------- */
+    .nav {
+      background: var(--blanco);
+      border-top: 2px solid var(--gris-borde);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 24px;
+      flex-shrink: 0;
+    }
+
+    .nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      color: var(--gris-texto);
+      font-size: 12px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .nav svg { width: 24px; height: 24px; fill: var(--gris-icono); }
+
+    .nav a.activo { color: var(--azul); }
+    .nav a.activo svg { fill: var(--azul); }
+
+    /* Imagen completa en cada cara de la credencial */
+    .credencial {
+      padding: 0;
+      aspect-ratio: 1.586 / 1;
+    }
+
+    .credencial img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="header">
+    <button aria-label="Volver" onclick="history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="20" y1="12" x2="4" y2="12"></line><polyline points="10 6 4 12 10 18"></polyline>
+      </svg>
+    </button>
+    <h1>DNI Digital</h1>
+    <button aria-label="Actualizar" onclick="cargar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 12a8 8 0 1 1-2.34-5.66"></path><polyline points="20 4 20 8 16 8"></polyline>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Contenido -->
+  <main class="contenido">
+
+    <!-- Estado 1: cargando -->
+    <div class="cargando oculto" id="cargando">
+      <div class="spinner" aria-label="Cargando"></div>
+    </div>
+
+    <!-- Estado 2: tarjeta -->
+    <section class="tarjeta" id="tarjeta">
+      <div class="tarjeta-cuerpo">
+        <h2 class="tarjeta-nombre">Guido Michael Trommershausen</h2>
+
+        <div class="giro" id="giro">
+         <div class="giro-interior" style="transform: rotateY(0deg);">
+        <!-- Frente -->
+        <div class="credencial">
+          <img src="img/frente-dni.jpg" alt="Frente de la credencial">
+        </div>
+
+        <!-- Dorso -->
+        <div class="credencial dorso">
+          <img src="img/dorso-dni.jpg" alt="Dorso de la credencial">
+        </div>
+         </div>
+        </div>
+
+
+        <p class="actualizacion">Última actualización: <span id="fecha">08/10/2026 01:08:25</span> hs</p>
+      </div>
+
+      <div class="acciones">
+        <button class="accion" onclick="mostrarCargaPermanente()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          Ver detalle
+        </button>
+        <button class="accion" onclick="mostrarCargaPermanente()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg>
+          Desactivar DNI
+        </button>
+      </div>
+
+      <div class="desplegable" id="desplegable">
+        <button class="accion" onclick="document.getElementById('desplegable').classList.toggle('abierto')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h3v3h-3zm5 0h3v3h-3zm-5 5h3v3h-3zm5 0h3v3h-3z"></path></svg>
+          Verifica código QR
+          <svg class="flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="panel-qr">
+          <div class="qr-muestra" id="qr"></div>
+          Código de muestra, sin datos reales.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Barra inferior -->
+  <nav class="nav">
+    <a href="#" class="activo">
+      <svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"></path></svg>
+      Inicio
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M3 4h14v16H5a2 2 0 0 1-2-2zm2 2v4h5V6zm7 0v1.5h3V6zm0 3v1h3V9zM5 12v1.5h10V12zm0 3v1.5h10V15zm13-7h3v10a2 2 0 0 1-2 2h-1z"></path></svg>
+      Novedades
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1zM15 3a6 6 0 0 1 6 6h-1.6A4.4 4.4 0 0 0 15 4.6zm0 3a3 3 0 0 1 3 3h-1.6A1.4 1.4 0 0 0 15 7.6z"></path></svg>
+      Teléfonos
+    </a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2c3 0 5.6 1.6 7 4-2.5.3-5-.6-7-2.5C10 7.4 7.5 8.3 5 8c1.4-2.4 4-4 7-4zM8.5 13a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4zm7 0a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4zM12 18a3.5 3.5 0 0 1-3-1.7h6A3.5 3.5 0 0 1 12 18z"></path></svg>
+      Ayuda
+    </a>
+  </nav>
+
+  <script>
+    // Barras decorativas de fantasía (no codifican nada)
+    const barras = document.getElementById('barras');
+    if (barras) {
+      for (let i = 0; i < 46; i++) {
+        const b = document.createElement('i');
+        b.style.width = (1 + (i * 7 % 3)) + 'px';
+        barras.appendChild(b);
+      }
+    }
+
+    // QR decorativo de fantasía (patrón aleatorio, no se puede leer)
+    const qr = document.getElementById("qr");
+    for (let i = 0; i < 196; i++) {
+      const c = document.createElement("i");
+      c.style.background = Math.random() > 0.5 ? "#111" : "#fff";
+      qr.appendChild(c);
+    }
+
+    // ---------- Giro con el dedo (o el mouse) ----------
+    const giro = document.getElementById('giro');
+    const interior = giro.querySelector('.giro-interior');
+    let angulo = 0;        // ángulo actual en grados
+    let inicioX = 0;       // dónde apoyó el dedo
+    let anguloInicio = 0;  // ángulo al empezar el gesto
+    let arrastrando = false;
+
+    function aplicarAngulo(a) {
+      interior.style.transform = `rotateY(${a}deg)`;
+    }
+
+    // Deja la tarjeta en un lado (múltiplo de 180) y actualiza los puntitos
+    function fijarAngulo(a) {
+      angulo = a;
+      aplicarAngulo(a);
+      const dorso = Math.abs(Math.round(a / 180)) % 2 === 1;
+      giro.classList.toggle('volteada', dorso);
+    }
+
+    giro.addEventListener('pointerdown', e => {
+      arrastrando = true;
+      inicioX = e.clientX;
+      anguloInicio = angulo;
+      giro.classList.add('arrastrando');
+      giro.setPointerCapture(e.pointerId);
+    });
+
+    giro.addEventListener('pointermove', e => {
+      if (!arrastrando) return;
+      const dx = e.clientX - inicioX;
+      // Recorrer todo el ancho de la tarjeta = media vuelta
+      angulo = anguloInicio + dx * (180 / giro.offsetWidth);
+      aplicarAngulo(angulo);
+    });
+
+    function soltar(e) {
+      if (!arrastrando) return;
+      arrastrando = false;
+      giro.classList.remove('arrastrando');
+      const dx = e.clientX - inicioX;
+      if (Math.abs(dx) < 6) {
+        // Fue un toque: gira media vuelta
+        fijarAngulo(anguloInicio + 180);
+      } else {
+        // Fue un arrastre: se acomoda al lado más cercano
+        fijarAngulo(Math.round(angulo / 180) * 180);
+      }
+    }
+
+    giro.addEventListener('pointerup', soltar);
+    giro.addEventListener('pointercancel', soltar);
+
+    // Deja la página cargando hasta que se pulse Actualizar.
+    function mostrarCargaPermanente() {
+      document.getElementById('cargando').classList.remove('oculto');
+      document.getElementById('tarjeta').classList.add('oculto');
+    }
+
+    // Todo control interactivo, salvo Actualizar, deja la pantalla cargando.
+    document.addEventListener("click", event => {
+      const control = event.target.closest("button, a[href]");
+      if (!control || control.getAttribute("aria-label") === "Actualizar") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      mostrarCargaPermanente();
+    }, true);
+
+    // Muestra el spinner y, después de 2 segundos, la tarjeta
+    function cargar() {
+      document.getElementById('cargando').classList.remove('oculto');
+      document.getElementById('tarjeta').classList.add('oculto');
+      fijarAngulo(0);
+      setTimeout(() => {
+        // Fecha y hora del momento en que termina de cargar (dd/mm/aaaa hh:mm:ss)
+        const d = new Date();
+        const dos = n => String(n).padStart(2, '0');
+        document.getElementById('fecha').textContent =
+          `${dos(d.getDate())}/${dos(d.getMonth() + 1)}/${d.getFullYear()} ` +
+          `${dos(d.getHours())}:${dos(d.getMinutes())}:${dos(d.getSeconds())}`;
+        document.getElementById('cargando').classList.add('oculto');
+        document.getElementById('tarjeta').classList.remove('oculto');
+      }, 2000);
+    }
+
+    cargar();
+  </script>
+
+
+
+</body></html>
